@@ -13,7 +13,7 @@ use std::{
 
 use glutin::{
     self,
-    dpi::PhysicalSize,
+    dpi::{PhysicalSize},
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{self, Fullscreen, Icon},
@@ -52,6 +52,7 @@ pub struct GlutinWindowWrapper {
     title: String,
     fullscreen: bool,
     saved_inner_size: PhysicalSize<u32>,
+    saved_scale_factor: f64,
     ui_command_sender: LoggingTx<UiCommand>,
     window_command_receiver: Receiver<WindowCommand>,
 }
@@ -129,6 +130,16 @@ impl GlutinWindowWrapper {
                 self.handle_quit(running);
             }
             Event::WindowEvent {
+                event:
+                    WindowEvent::ScaleFactorChanged {
+                        scale_factor,
+                        new_inner_size,
+                    },
+                ..
+            } => {
+                self.handle_scale_factor_update(scale_factor, new_inner_size);
+            }
+            Event::WindowEvent {
                 event: WindowEvent::DroppedFile(path),
                 ..
             } => {
@@ -159,6 +170,7 @@ impl GlutinWindowWrapper {
         let previous_size = self.saved_inner_size;
 
         if previous_size != current_size {
+            println!("Updating grid size: {:#?}", current_size);
             self.saved_inner_size = current_size;
             handle_new_grid_size(current_size, &self.renderer, &self.ui_command_sender);
             self.skia_renderer.resize(&self.windowed_context);
@@ -180,6 +192,49 @@ impl GlutinWindowWrapper {
             self.skia_renderer.gr_context.flush(None);
             self.windowed_context.swap_buffers().unwrap();
         }
+    }
+
+    fn handle_scale_factor_update(
+        &mut self,
+        scale_factor: f64,
+        new_inner_size: &mut PhysicalSize<u32>,
+    ) {
+        // This changes font size, it works
+        self.renderer.handle_scale_factor_update(scale_factor);
+        // This should change window size, it doesn't work.
+        //
+        // https://docs.rs/winit/0.20.0/winit/event/enum.WindowEvent.html#variant.ScaleFactorChanged
+        // From docs:
+        // > After this event callback has been processed, the window will be resized to whatever
+        // > value is pointed to by the new_inner_size reference. By default, this will contain the
+        // > size suggested by the OS, but it can be changed to any value.
+        //
+        // Here i try to convert old size to logical with old scale_factor, and then to physical
+        // with new, and assign it to mutable reference new_inner_size.
+        // But window size does not change.
+        //
+        // I tested this on Gnome/wayland, changing Scale in Display Settings.
+        // when using X11 backend, there is not signal for ScaleFactorChanged.
+        let old_size = self
+            .saved_inner_size
+            .to_logical::<u32>(self.saved_scale_factor);
+        let new_size = old_size.to_physical(scale_factor);
+
+        println!(
+            "Old scale: {}, new: {}",
+            self.saved_scale_factor, scale_factor
+        );
+
+        println!(
+            " saved_inner_size: {:#?}
+             old_size: {:#?}
+             new_inner_size {:#?}
+             new_size {:#?}",
+            self.saved_inner_size, old_size, new_inner_size, new_size,
+        );
+
+        self.saved_scale_factor = scale_factor;
+        *new_inner_size = new_size;
     }
 }
 
@@ -242,6 +297,7 @@ pub fn start_loop(
     );
 
     let saved_inner_size = window.inner_size();
+    let saved_scale_factor = window.scale_factor();
 
     let mut window_wrapper = GlutinWindowWrapper {
         windowed_context,
@@ -252,6 +308,7 @@ pub fn start_loop(
         title: String::from("Neovide"),
         fullscreen: false,
         saved_inner_size,
+        saved_scale_factor,
         ui_command_sender,
         window_command_receiver,
     };
