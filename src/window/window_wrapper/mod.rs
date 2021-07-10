@@ -13,7 +13,7 @@ use std::{
 
 use glutin::{
     self,
-    dpi::{PhysicalSize},
+    dpi::PhysicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::{self, Fullscreen, Icon},
