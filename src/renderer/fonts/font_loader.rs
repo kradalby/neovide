@@ -54,8 +54,8 @@ pub struct FontKey {
     pub font_selection: FontSelection,
 }
 
-impl FontKey {
-    pub fn default() -> FontKey {
+impl Default for FontKey {
+    fn default() -> Self {
         FontKey {
             italic: false,
             bold: false,
