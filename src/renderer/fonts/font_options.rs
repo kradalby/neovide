@@ -11,14 +11,6 @@ pub struct FontOptions {
 }
 
 impl FontOptions {
-    pub fn default() -> FontOptions {
-        FontOptions {
-            font_list: Vec::new(),
-            bold: false,
-            italic: false,
-            size: DEFAULT_FONT_SIZE,
-        }
-    }
     pub fn parse(guifont_setting: &str) -> FontOptions {
         let mut font_list = Vec::new();
         let mut size = DEFAULT_FONT_SIZE;
@@ -69,6 +61,17 @@ impl FontOptions {
             italic: self.italic,
             bold: self.bold,
             font_selection,
+        }
+    }
+}
+
+impl Default for FontOptions {
+    fn default() -> Self {
+        FontOptions {
+            font_list: Vec::new(),
+            bold: false,
+            italic: false,
+            size: DEFAULT_FONT_SIZE,
         }
     }
 }
