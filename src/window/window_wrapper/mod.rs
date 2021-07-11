@@ -52,7 +52,6 @@ pub struct GlutinWindowWrapper {
     title: String,
     fullscreen: bool,
     saved_inner_size: PhysicalSize<u32>,
-    saved_scale_factor: f64,
     ui_command_sender: LoggingTx<UiCommand>,
     window_command_receiver: Receiver<WindowCommand>,
 }
@@ -254,7 +253,6 @@ pub fn start_loop(
     );
 
     let saved_inner_size = window.inner_size();
-    let saved_scale_factor = window.scale_factor();
 
     let mut window_wrapper = GlutinWindowWrapper {
         windowed_context,
@@ -265,7 +263,6 @@ pub fn start_loop(
         title: String::from("Neovide"),
         fullscreen: false,
         saved_inner_size,
-        saved_scale_factor,
         ui_command_sender,
         window_command_receiver,
     };
