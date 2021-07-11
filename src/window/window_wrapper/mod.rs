@@ -130,14 +130,10 @@ impl GlutinWindowWrapper {
                 self.handle_quit(running);
             }
             Event::WindowEvent {
-                event:
-                    WindowEvent::ScaleFactorChanged {
-                        scale_factor,
-                        new_inner_size,
-                    },
+                event: WindowEvent::ScaleFactorChanged { scale_factor, .. },
                 ..
             } => {
-                self.handle_scale_factor_update(scale_factor, new_inner_size);
+                self.handle_scale_factor_update(scale_factor);
             }
             Event::WindowEvent {
                 event: WindowEvent::DroppedFile(path),
@@ -194,47 +190,8 @@ impl GlutinWindowWrapper {
         }
     }
 
-    fn handle_scale_factor_update(
-        &mut self,
-        scale_factor: f64,
-        new_inner_size: &mut PhysicalSize<u32>,
-    ) {
-        // This changes font size, it works
+    fn handle_scale_factor_update(&mut self, scale_factor: f64) {
         self.renderer.handle_scale_factor_update(scale_factor);
-        // This should change window size, it doesn't work.
-        //
-        // https://docs.rs/winit/0.20.0/winit/event/enum.WindowEvent.html#variant.ScaleFactorChanged
-        // From docs:
-        // > After this event callback has been processed, the window will be resized to whatever
-        // > value is pointed to by the new_inner_size reference. By default, this will contain the
-        // > size suggested by the OS, but it can be changed to any value.
-        //
-        // Here i try to convert old size to logical with old scale_factor, and then to physical
-        // with new, and assign it to mutable reference new_inner_size.
-        // But window size does not change.
-        //
-        // I tested this on Gnome/wayland, changing Scale in Display Settings.
-        // when using X11 backend, there is no signal for ScaleFactorChanged.
-        let old_size = self
-            .saved_inner_size
-            .to_logical::<u32>(self.saved_scale_factor);
-        let new_size = old_size.to_physical(scale_factor);
-
-        println!(
-            "Old scale: {}, new: {}",
-            self.saved_scale_factor, scale_factor
-        );
-
-        println!(
-            " saved_inner_size: {:#?}
-             old_size: {:#?}
-             new_inner_size {:#?}
-             new_size {:#?}",
-            self.saved_inner_size, old_size, new_inner_size, new_size,
-        );
-
-        self.saved_scale_factor = scale_factor;
-        *new_inner_size = new_size;
     }
 }
 
