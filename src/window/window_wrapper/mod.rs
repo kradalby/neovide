@@ -214,7 +214,7 @@ impl GlutinWindowWrapper {
         // But window size does not change.
         //
         // I tested this on Gnome/wayland, changing Scale in Display Settings.
-        // when using X11 backend, there is not signal for ScaleFactorChanged.
+        // when using X11 backend, there is no signal for ScaleFactorChanged.
         let old_size = self
             .saved_inner_size
             .to_logical::<u32>(self.saved_scale_factor);
